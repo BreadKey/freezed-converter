@@ -98,11 +98,7 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 		if currentParameter == nil {
 			currentParameter = &ParameterToken{}
 
-			typeName, include := skipAnnotation(tokenizer, token)
-
-			if typeName == "required" {
-				typeName = tokenizer.Next()
-			}
+			typeName, include := getParameterType(tokenizer, token)
 
 			name := tokenizer.Next()
 
@@ -111,7 +107,7 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 
 			if isNullable(typeName) {
 				currentParameter.Nullable = true
-				currentParameter.Type = typeName[0 : len(typeName)-1]
+				currentParameter.Type = typeName[:len(typeName)-1]
 			}
 
 			if include {
@@ -122,7 +118,7 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 	}
 }
 
-func skipAnnotation(tokenizer *Tokenizer, currentToken string) (string, bool) {
+func getParameterType(tokenizer *Tokenizer, currentToken string) (string, bool) {
 	include := true
 	typeName := currentToken
 	for {
@@ -150,6 +146,10 @@ func skipAnnotation(tokenizer *Tokenizer, currentToken string) (string, bool) {
 		} else {
 			break
 		}
+	}
+
+	if typeName == "required" {
+		typeName = tokenizer.Next()
 	}
 
 	return typeName, include
