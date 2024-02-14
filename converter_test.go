@@ -15,7 +15,7 @@ func TestParse(t *testing.T) {
 		t.Errorf("Wrong name! %s", freezed.Name)
 	}
 
-	if len(freezed.Parameters) != 3 {
+	if len(freezed.Parameters) != 4 {
 		t.Errorf("Wrong parameter length! %d\n", len(freezed.Parameters))
 
 		for _, p := range freezed.Parameters {
@@ -23,7 +23,7 @@ func TestParse(t *testing.T) {
 		}
 	}
 
-	expectedParameters := [3]ParameterToken{
+	expectedParameters := [4]ParameterToken{
 		{
 			Type: "int",
 			Name: "a",
@@ -36,6 +36,10 @@ func TestParse(t *testing.T) {
 			Type: "double",
 			Name: "c",
 		},
+		{
+			Type: "int?",
+			Name: "d",
+		},
 	}
 
 	for i, p := range freezed.Parameters {
@@ -44,5 +48,24 @@ func TestParse(t *testing.T) {
 		if expected.Type != p.Type || expected.Name != p.Name {
 			t.Errorf("Wrong parameter! expected: %s, %s, actual: %s, %s", expected.Type, expected.Name, p.Type, p.Name)
 		}
+	}
+}
+
+func TestTranslateToGo(t *testing.T) {
+	result := Parse("test_freezed.dart")
+
+	freezed := result[0]
+
+	expected := `type TestData struct {
+	A int     ` + "`firestore:\"a\"`" + `
+	B string  ` + "`firestore:\"b\"`" + `
+	C float64 ` + "`firestore:\"c\"`" + `
+	D *int    ` + "`firestore:\"d,omitempty\"`" + `
+}`
+
+	translated := TranslateToGo(&freezed)
+
+	if translated != expected {
+		t.Errorf("Wront result! %v", translated)
 	}
 }

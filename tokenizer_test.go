@@ -26,6 +26,8 @@ func TestToken(t *testing.T) {
 		"required",
 		"double",
 		"c",
+		"int?",
+		"d",
 		"}",
 		")",
 		"=",
