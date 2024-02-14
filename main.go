@@ -1,5 +1,0 @@
-package freezedconverter
-
-func main() {
-	
-}

@@ -37,8 +37,9 @@ func TestParse(t *testing.T) {
 			Name: "c",
 		},
 		{
-			Type: "int?",
+			Type: "int",
 			Name: "d",
+			Nullable: true,
 		},
 	}
 

@@ -50,10 +50,14 @@ parse:
 				}
 			}
 		case "class":
-			name := tokenizer.Next()
-			currentFreezed.Name = name
+			if currentFreezed != nil {
+				name := tokenizer.Next()
+				currentFreezed.Name = name
+			}
 		case "factory":
-			parseParameters(tokenizer, currentFreezed)
+			if currentFreezed != nil {
+				parseParameters(tokenizer, currentFreezed)
+			}
 		}
 	}
 
@@ -68,6 +72,10 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 	freezedName := tokenizer.Next()
 
 	if freezedName != freezed.Name {
+		if freezedName == freezed.Name+".fromJson" {
+			return
+		}
+
 		log.Fatalf("Not implemented multiple freezed! %s", freezedName)
 	}
 
@@ -89,12 +97,15 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 
 		if currentParameter == nil {
 			currentParameter = &ParameterToken{}
-			typeName := token
+
+			typeName, include := skipAnnotation(tokenizer, token)
+
 			if typeName == "required" {
 				typeName = tokenizer.Next()
 			}
 
 			name := tokenizer.Next()
+
 			currentParameter.Type = typeName
 			currentParameter.Name = name
 
@@ -103,10 +114,45 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 				currentParameter.Type = typeName[0 : len(typeName)-1]
 			}
 
-			freezed.Parameters = append(freezed.Parameters, *currentParameter)
+			if include {
+				freezed.Parameters = append(freezed.Parameters, *currentParameter)
+			}
 			currentParameter = nil
 		}
 	}
+}
+
+func skipAnnotation(tokenizer *Tokenizer, currentToken string) (string, bool) {
+	include := true
+	typeName := currentToken
+	for {
+		if typeName[0] == '@' {
+			tokenizer.Next()
+			bracketCount := 1
+
+			for {
+				next := tokenizer.Next()
+
+				if IsOpeningBracket(next) {
+					bracketCount++
+				} else if IsClosingBracket(next) {
+					bracketCount--
+
+					if bracketCount == 0 {
+						typeName = tokenizer.Next()
+						break
+					}
+				} else if next == "includeToJson" {
+					includeToJson := tokenizer.Next()
+					include = includeToJson != "false"
+				}
+			}
+		} else {
+			break
+		}
+	}
+
+	return typeName, include
 }
 
 func isNullable(typeName string) bool {

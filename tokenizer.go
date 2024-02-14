@@ -8,7 +8,7 @@ import (
 var openBracketRunes = []rune{'(', '{', '['}
 var closeBracketRunes = []rune{')', '}', ']'}
 var bracketRunes = append(openBracketRunes, closeBracketRunes...)
-var endRunes = append(bracketRunes, '\n', '\t', ' ', ',', ';')
+var endRunes = append(bracketRunes, '\n', '\t', ' ', ',', ';', ':')
 
 func contains(runes []rune, r rune) bool {
 	for _, c := range runes {

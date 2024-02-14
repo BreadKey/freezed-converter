@@ -5,5 +5,7 @@ class TestData with _$TestData {
     required String b,
     required double c,
     int? d,
+    @JsonKey(includeToJson: false)
+    int? e,
   }) = _TestData;
 }
