@@ -1,4 +1,5 @@
 # Example
+```cd cli;go run . ../test_freezed.dart```
 ## Input
 ```dart
 @freezed
