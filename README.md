@@ -23,3 +23,5 @@ type TestData struct {
 	D *int    `firestore:"d,omitempty"`
 }
 ```
+# Supported Languages
+## Go
