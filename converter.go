@@ -18,7 +18,7 @@ type Freezed struct {
 	blockCount int
 }
 
-type convertForMap func(p *ParameterToken) string
+type stringMapper func(p *ParameterToken) string
 
 func Parse(filePath string) []Freezed {
 	result := make([]Freezed, 0, 2)
@@ -197,11 +197,11 @@ func capitalize(str string) string {
 	return string(runes)
 }
 
-func maxStrLength(parameters []ParameterToken, convert convertForMap) int {
+func maxStrLength(parameters []ParameterToken, mapper stringMapper) int {
 	strs := make([]string, len(parameters))
 
 	for i, p := range parameters {
-		strs[i] = convert(&p)
+		strs[i] = mapper(&p)
 	}
 
 	length := 0
