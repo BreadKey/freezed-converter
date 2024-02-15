@@ -1,7 +1,6 @@
 package freezedconverter
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"unicode"
@@ -164,7 +163,7 @@ func isNullable(typeName string) bool {
 func TranslateToGo(freezed *Freezed) string {
 	sb := strings.Builder{}
 
-	sb.WriteString(fmt.Sprintf("type %s struct {\n", freezed.Name))
+	sb.WriteString("type " + freezed.Name + " struct {\n")
 
 	goParameters := make([]ParameterToken, len(freezed.Parameters))
 
@@ -182,7 +181,8 @@ func TranslateToGo(freezed *Freezed) string {
 			firestoreName += ",omitempty"
 		}
 
-		sb.WriteString(fmt.Sprintf("\t%s %s `firestore:\"%s\"`\n", pad(goP.Name, maxNameLength), pad(goP.Type, maxTypeLength), firestoreName))
+		line := "\t" + pad(goP.Name, maxNameLength) + " " + pad(goP.Type, maxTypeLength) + " `firestore:\"" + firestoreName + "\"`\n"
+		sb.WriteString(line)
 	}
 	sb.WriteString("}")
 
