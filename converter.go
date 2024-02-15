@@ -1,7 +1,6 @@
 package freezedconverter
 
 import (
-	"log"
 	"strings"
 	"unicode"
 )
@@ -15,7 +14,6 @@ type ParameterToken struct {
 type Freezed struct {
 	Name       string
 	Parameters []ParameterToken
-	blockCount int
 }
 
 type stringMapper func(p *ParameterToken) string
@@ -35,19 +33,6 @@ parse:
 			break parse
 		case "@freezed":
 			currentFreezed = &Freezed{}
-		case "{":
-			if currentFreezed != nil {
-				currentFreezed.blockCount++
-			}
-		case "}":
-			if currentFreezed != nil {
-				currentFreezed.blockCount--
-
-				if currentFreezed.blockCount == 0 {
-					result = append(result, *currentFreezed)
-					currentFreezed = nil
-				}
-			}
 		case "class":
 			if currentFreezed != nil {
 				name := tokenizer.Next()
@@ -55,7 +40,39 @@ parse:
 			}
 		case "factory":
 			if currentFreezed != nil {
+				factoryName := tokenizer.Next()
+
+				containsDot, at := contains([]rune(factoryName), '.')
+				if containsDot {
+					if factoryName[at:] == ".fromJson" {
+						currentFreezed = &Freezed{
+							Name: currentFreezed.Name,
+						}
+						continue
+					}
+
+					currentFreezed.Name = factoryName
+				}
+
 				parseParameters(tokenizer, currentFreezed)
+			}
+		case "=":
+			if currentFreezed != nil {
+				name := []rune(currentFreezed.Name)
+
+				if containsDot, at := contains(name, '.'); containsDot {
+					constructorName := tokenizer.Next()
+
+					if constructorName[0] != '_' {
+						currentFreezed.Name = constructorName
+					} else {
+						name[at+1] = unicode.ToUpper(name[at+1])
+						currentFreezed.Name = string(name[:at]) + string(name[at+1:])
+					}
+				}
+
+				result = append(result, *currentFreezed)
+				currentFreezed = &Freezed{}
 			}
 		}
 	}
@@ -67,16 +84,6 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 	bracketCount := 0
 
 	var currentParameter *ParameterToken
-
-	freezedName := tokenizer.Next()
-
-	if freezedName != freezed.Name {
-		if freezedName == freezed.Name+".fromJson" {
-			return
-		}
-
-		log.Fatalf("Not implemented multiple freezed! %s", freezedName)
-	}
 
 	for {
 		token := tokenizer.Next()
@@ -100,6 +107,14 @@ func parseParameters(tokenizer *Tokenizer, freezed *Freezed) {
 			typeName, include := getParameterType(tokenizer, token)
 
 			name := tokenizer.Next()
+			if name == "<" {
+				typeName = parseTypedParameter(tokenizer, typeName)
+				name = tokenizer.Next()
+				if name == "?" {
+					typeName += "?"
+					name = tokenizer.Next()
+				}
+			}
 
 			currentParameter.Type = typeName
 			currentParameter.Name = name
@@ -152,6 +167,25 @@ func getParameterType(tokenizer *Tokenizer, currentToken string) (string, bool) 
 	}
 
 	return typeName, include
+}
+
+func parseTypedParameter(tokenizer *Tokenizer, typeName string) string {
+	typeName += "<"
+	bracketCount := 1
+
+	for {
+		token := tokenizer.Next()
+		typeName += token
+
+		if IsOpeningBracket(token) {
+			bracketCount++
+		} else if IsClosingBracket(token) {
+			bracketCount--
+			if bracketCount == 0 {
+				return typeName
+			}
+		}
+	}
 }
 
 func isNullable(typeName string) bool {
@@ -255,13 +289,15 @@ func translateToGoParameter(p *ParameterToken) *ParameterToken {
 	goName := toGoName(p.Name)
 	var goType string
 
-	switch p.Type {
-	case "int":
+	switch {
+	case p.Type == "int":
 		goType = "int"
-	case "bool":
+	case p.Type == "bool":
 		goType = "bool"
-	case "double":
+	case p.Type == "double":
 		goType = "float64"
+	case p.Type[:4] == "List", p.Type[:3] == "Map":
+		goType = "?"
 	default:
 		goType = "string"
 	}

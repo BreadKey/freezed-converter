@@ -9,5 +9,6 @@ class TestData with _$TestData {
     @JsonKey(includeToJson: false) int? e,
     String? refId,
     required bool idle,
+    List<int>? list,
   }) = _TestData;
 }

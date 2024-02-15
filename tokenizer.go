@@ -5,38 +5,41 @@ import (
 	"os"
 )
 
-var openBracketRunes = []rune{'(', '{', '['}
-var closeBracketRunes = []rune{')', '}', ']'}
+var openBracketRunes = []rune{'(', '{', '[', '<'}
+var closeBracketRunes = []rune{')', '}', ']', '>'}
 var bracketRunes = append(openBracketRunes, closeBracketRunes...)
 var endRunes = append(bracketRunes, '\n', '\t', ' ', ',', ';', ':')
 
-func contains(runes []rune, r rune) bool {
-	for _, c := range runes {
+func contains(runes []rune, r rune) (bool, int) {
+	for i, c := range runes {
 		if c == r {
-			return true
+			return true, i
 		}
 	}
 
-	return false
+	return false, -1
 }
 
 func IsBracket(str string) bool {
 	for _, r := range str {
-		return contains(bracketRunes, r)
+		c, _ := contains(bracketRunes, r)
+		return c
 	}
 	return false
 }
 
 func IsOpeningBracket(str string) bool {
 	for _, r := range str {
-		return contains(openBracketRunes, r)
+		c, _ := contains(openBracketRunes, r)
+		return c
 	}
 	return false
 }
 
 func IsClosingBracket(str string) bool {
 	for _, r := range str {
-		return contains(closeBracketRunes, r)
+		c, _ := contains(closeBracketRunes, r)
+		return c
 	}
 	return false
 }
@@ -86,22 +89,29 @@ func (it *Tokenizer) Next() string {
 
 	startPointer := it.Pointer
 
-	for pos, char := range str {
+	for pos, r := range str {
 		it.Pointer = startPointer + pos + 1
 
+		isEndRunes, _ := contains(endRunes, r)
 		switch {
-		case contains(endRunes, char):
+		case isEndRunes:
+			if string(it.currentToken) + string(r) == "=>" {
+				it.Pointer = startPointer + pos
+
+				it.returnToken("=>")
+			}
+
 			if len(it.currentToken) != 0 {
 				it.Pointer = startPointer + pos
 
 				return it.returnToken(it.currentToken)
 			} else {
-				if contains(bracketRunes, char) {
-					return it.returnToken(string(char))
+				if isBracket, _ := contains(bracketRunes, r); isBracket {
+					return it.returnToken(string(r))
 				}
 			}
 		default:
-			it.currentToken += string(char)
+			it.currentToken += string(r)
 		}
 	}
 

@@ -15,7 +15,7 @@ func TestParse(t *testing.T) {
 		t.Errorf("Wrong name! %s", freezed.Name)
 	}
 
-	expectedParameters := [7]ParameterToken{
+	expectedParameters := [8]ParameterToken{
 		{
 			Type: "String",
 			Name: "id",
@@ -45,6 +45,11 @@ func TestParse(t *testing.T) {
 		{
 			Type: "bool",
 			Name: "idle",
+		},
+		{
+			Type:     "List<int>",
+			Name:     "list",
+			Nullable: true,
 		},
 	}
 
@@ -78,6 +83,7 @@ func TestTranslateToGo(t *testing.T) {
 	D     *int    ` + "`firestore:\"d,omitempty\"`" + `
 	RefID *string ` + "`firestore:\"refId,omitempty\"`" + `
 	Idle  bool    ` + "`firestore:\"idle\"`" + `
+	List  *?      ` + "`firestore:\"list,omitempty\"`" + `
 }`
 
 	translated := TranslateToGo(&freezed)

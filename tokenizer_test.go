@@ -43,6 +43,8 @@ func TestToken(t *testing.T) {
 		"required",
 		"bool",
 		"idle",
+		"List<int>",
+		"list",
 		"}",
 		")",
 		"=",
