@@ -15,15 +15,11 @@ func TestParse(t *testing.T) {
 		t.Errorf("Wrong name! %s", freezed.Name)
 	}
 
-	if len(freezed.Parameters) != 4 {
-		t.Errorf("Wrong parameter length! %d\n", len(freezed.Parameters))
-
-		for _, p := range freezed.Parameters {
-			t.Errorf("%s, %s\n", p.Type, p.Name)
-		}
-	}
-
-	expectedParameters := [4]ParameterToken{
+	expectedParameters := [7]ParameterToken{
+		{
+			Type: "String",
+			Name: "id",
+		},
 		{
 			Type: "int",
 			Name: "a",
@@ -37,10 +33,27 @@ func TestParse(t *testing.T) {
 			Name: "c",
 		},
 		{
-			Type: "int",
-			Name: "d",
+			Type:     "int",
+			Name:     "d",
 			Nullable: true,
 		},
+		{
+			Type:     "String",
+			Name:     "refId",
+			Nullable: true,
+		},
+		{
+			Type: "bool",
+			Name: "idle",
+		},
+	}
+
+	if len(freezed.Parameters) != len(expectedParameters) {
+		t.Errorf("Wrong parameter length! %d\n", len(freezed.Parameters))
+
+		for _, p := range freezed.Parameters {
+			t.Errorf("%s, %s\n", p.Type, p.Name)
+		}
 	}
 
 	for i, p := range freezed.Parameters {
@@ -58,10 +71,13 @@ func TestTranslateToGo(t *testing.T) {
 	freezed := result[0]
 
 	expected := `type TestData struct {
-	A int     ` + "`firestore:\"a\"`" + `
-	B string  ` + "`firestore:\"b\"`" + `
-	C float64 ` + "`firestore:\"c\"`" + `
-	D *int    ` + "`firestore:\"d,omitempty\"`" + `
+	ID    string  ` + "`firestore:\"id\"`" + `
+	A     int     ` + "`firestore:\"a\"`" + `
+	B     string  ` + "`firestore:\"b\"`" + `
+	C     float64 ` + "`firestore:\"c\"`" + `
+	D     *int    ` + "`firestore:\"d,omitempty\"`" + `
+	RefID *string ` + "`firestore:\"refId,omitempty\"`" + `
+	Idle  bool    ` + "`firestore:\"idle\"`" + `
 }`
 
 	translated := TranslateToGo(&freezed)

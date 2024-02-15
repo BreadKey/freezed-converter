@@ -189,10 +189,28 @@ func TranslateToGo(freezed *Freezed) string {
 	return sb.String()
 }
 
-func capitalize(str string) string {
+func toGoName(str string) string {
 	runes := []rune(str)
 
 	runes[0] = unicode.ToUpper(runes[0])
+	length := len(str)
+
+	for i := 0; i < length-1; i++ {
+		r := runes[i]
+		isStartOfId := r == 'I' || (i == 0 && r == 'i')
+
+		if isStartOfId {
+			if runes[i+1] == 'd' {
+				if i+2 < length {
+					rAfterId := runes[i+2]
+					if unicode.IsLower(rAfterId) {
+						continue
+					}
+				}
+				runes[i+1] = 'D'
+			}
+		}
+	}
 
 	return string(runes)
 }
@@ -234,12 +252,14 @@ func pad(name string, length int) string {
 }
 
 func translateToGoParameter(p *ParameterToken) *ParameterToken {
-	goName := capitalize(p.Name)
+	goName := toGoName(p.Name)
 	var goType string
 
 	switch p.Type {
 	case "int":
 		goType = "int"
+	case "bool":
+		goType = "bool"
 	case "double":
 		goType = "float64"
 	default:
