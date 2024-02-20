@@ -30,6 +30,7 @@ type TestData struct {
 }
 ```
 ## l10n
+```cd cli;go run . ../test_l10n.arb```
 ### Input
 ```json
 {
