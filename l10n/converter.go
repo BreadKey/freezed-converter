@@ -62,15 +62,12 @@ parse:
 func parseSelect(key string, value string) *Select {
 	last := ""
 	current := ""
-	if value[1] != '{' {
-		return nil
-	}
 
 	s := &Select{
 		Name: key[1 : len(key)-1],
 	}
 	pairs := make([]SelectPair, 0, 2)
-
+	meetBracket := false
 	isSelect := false
 
 	i := 0
@@ -82,13 +79,16 @@ checkSelect:
 		}
 
 		r := value[i]
-		if i > 1 {
+		if i > 0 {
 			switch r {
 			case ' ':
-				i++
-				continue
+				if !meetBracket {
+					current += string(r)
+				}
 			case '{':
+				meetBracket = true
 				s.Prefix = current
+				current = ""
 			case ',':
 				if current == "select" {
 					isSelect = true
@@ -191,25 +191,12 @@ func TranslateToGo(selectSyntax *Select) string {
 	sb.WriteString("type " + placeHolderName + " int\n")
 	sb.WriteString("const (\n")
 
-	maxLength := 0
-
 	var otherValue string
-
-	for _, pair := range selectSyntax.Pairs {
-		if pair.Key == "other" {
-			otherValue = pair.Value
-			continue
-		}
-
-		keyLength := len(pair.Key)
-		if keyLength > maxLength {
-			maxLength = keyLength
-		}
-	}
 
 	assignIota := false
 	for _, pair := range selectSyntax.Pairs {
 		if pair.Key == "other" {
+			otherValue = pair.Value
 			continue
 		}
 		if !assignIota {
@@ -219,7 +206,20 @@ func TranslateToGo(selectSyntax *Select) string {
 			sb.WriteString("\t" + fc.ToGoName(pair.Key) + "\n")
 		}
 	}
-	sb.WriteString(")\n\n")
+	sb.WriteString(")\n")
+	sb.WriteString("func " + placeHolderName + "ToL10n(" + selectSyntax.PlaceHolder + " " + placeHolderName + ") string {\n")
+	sb.WriteString("\tswitch {\n")
+	for _, pair := range selectSyntax.Pairs {
+		if pair.Key == "other" {
+			continue
+		}
+
+		keyName := fc.ToGoName(pair.Key)
+		sb.WriteString("\tcase " + keyName + ":\n")
+		sb.WriteString("\t\treturn \"" + pair.Key + "\"\n")
+	}
+	sb.WriteString("\tdefault:\n\t\treturn \"other\"\n")
+	sb.WriteString("\t}\n}\n\n")
 
 	sb.WriteString("func " + fc.ToGoName(selectSyntax.Name) + "(" + selectSyntax.PlaceHolder + " " + placeHolderName + ") string {\n")
 	sb.WriteString("\tswitch " + selectSyntax.PlaceHolder + " {\n")

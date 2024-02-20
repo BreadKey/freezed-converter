@@ -1,0 +1,3 @@
+{
+    "helloPet": "Hello {species, select, dog{Dog} cat{Cat} others{Others} other{?}} World!"
+}
