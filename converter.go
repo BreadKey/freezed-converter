@@ -71,7 +71,9 @@ parse:
 					}
 				}
 
-				result = append(result, *currentFreezed)
+				if len(currentFreezed.Parameters) > 0 {
+					result = append(result, *currentFreezed)
+				}
 				currentFreezed = &Freezed{}
 			}
 		}
@@ -194,7 +196,7 @@ func isNullable(typeName string) bool {
 	return runes[len(typeName)-1] == '?'
 }
 
-func TranslateToGo(freezed *Freezed) string {
+func TranslateToGo(freezed *Freezed, format string) string {
 	sb := strings.Builder{}
 
 	sb.WriteString("type " + freezed.Name + " struct {\n")
@@ -209,13 +211,13 @@ func TranslateToGo(freezed *Freezed) string {
 	maxTypeLength := maxStrLength(goParameters, func(p *ParameterToken) string { return p.Type })
 
 	for i, goP := range goParameters {
-		firestoreName := freezed.Parameters[i].Name
+		formattedName := freezed.Parameters[i].Name
 
 		if goP.Nullable {
-			firestoreName += ",omitempty"
+			formattedName += ",omitempty"
 		}
 
-		line := "\t" + pad(goP.Name, maxNameLength) + " " + pad(goP.Type, maxTypeLength) + " `firestore:\"" + firestoreName + "\"`\n"
+		line := "\t" + pad(goP.Name, maxNameLength) + " " + pad(goP.Type, maxTypeLength) + " `" + format + ":\"" + formattedName + "\"`\n"
 		sb.WriteString(line)
 	}
 	sb.WriteString("}")

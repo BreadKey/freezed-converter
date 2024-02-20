@@ -30,3 +30,7 @@ type TestData struct {
 ```
 # Supported Languages
 ## Go
+
+# Supported Formats
+## firestore
+## json

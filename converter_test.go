@@ -86,7 +86,7 @@ func TestTranslateToGo(t *testing.T) {
 	List  *?      ` + "`firestore:\"list,omitempty\"`" + `
 }`
 
-	translated := TranslateToGo(&freezed)
+	translated := TranslateToGo(&freezed, "firestore")
 
 	if translated != expected {
 		t.Errorf("Wront result! %v", translated)

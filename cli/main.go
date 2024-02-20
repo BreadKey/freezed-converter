@@ -11,10 +11,15 @@ const (
 	fullCommand          = "--"
 	outputCommand        = "output"
 	languageCommand      = "language"
+	formatCommand        = "format"
 	shortCommand         = "-"
 	shortLanguageCommand = "l"
 	shortOutputCommand   = "o"
-	defaultLanguage      = "go"
+	shortFormatCommand   = "f"
+
+	defaultLanguage = "go"
+
+	defaultFormat = "firestore"
 
 	enterCorrectFileName = "Please enter dart file name like **/*.dart!"
 	enterCorrectCommand  = "Please enter correct command!"
@@ -22,6 +27,7 @@ const (
 )
 
 var supportedLanguages = [...]string{defaultLanguage}
+var supportedFormats = [...]string{defaultFormat, "json"}
 
 func main() {
 	args := os.Args
@@ -39,6 +45,7 @@ func main() {
 	pointer := 2
 
 	language := defaultLanguage
+	format := defaultFormat
 	fileNameParts := strings.Split(fileName, string(os.PathSeparator))
 
 	dartFileName := fileNameParts[len(fileNameParts)-1]
@@ -87,14 +94,20 @@ func main() {
 				outputFileName = arg
 			case languageCommand:
 				language = arg
+			case formatCommand:
+				format = arg
 			}
 
 			pointer += 2
 		}
 	}
 
-	if !supported(language) {
-		log.Fatalln("")
+	if !isSupportedLanguage(language) {
+		log.Fatalln("Unsupported Language! Please enter language in", supportedFormats)
+	}
+
+	if !isSupportedFormat(format) {
+		log.Fatalln("Unsupported format! Please enter language in", supportedFormats)
 	}
 
 	if outputFileName == "" {
@@ -121,22 +134,32 @@ func main() {
 		translates := make([]string, len(freezeds))
 
 		for i, f := range freezeds {
-			translates[i] = freezedconverter.TranslateToGo(&f)
+			translates[i] = freezedconverter.TranslateToGo(&f, format)
 		}
 
 		result := strings.Join(translates, "\n\n")
 
 		err := os.WriteFile(outputFileName, []byte(result), os.ModePerm)
-	
+
 		if err != nil {
 			log.Fatalf("Write file error! %v", err)
 		}
 	}
 }
 
-func supported(language string) bool {
+func isSupportedLanguage(language string) bool {
 	for _, l := range supportedLanguages {
 		if l == language {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isSupportedFormat(format string) bool {
+	for _, l := range supportedFormats {
+		if l == format {
 			return true
 		}
 	}
@@ -155,10 +178,12 @@ func translateCommand(command string, isShort bool) string {
 			return outputCommand
 		case shortLanguageCommand:
 			return languageCommand
+		case shortFormatCommand:
+			return formatCommand
 		}
 	} else {
 		switch command {
-		case outputCommand, languageCommand:
+		case outputCommand, languageCommand, formatCommand:
 			return command
 		}
 	}
