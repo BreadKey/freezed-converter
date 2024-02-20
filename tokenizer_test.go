@@ -6,6 +6,12 @@ func TestToken(t *testing.T) {
 	tokenizer := NewTokenizer("test_freezed.dart")
 
 	expectedTokens := []string{
+		"import",
+		"'test.dart'",
+		"final",
+		"a",
+		"=",
+		"\"test{Hello}\"",
 		"@freezed",
 		"class",
 		"TestData",
@@ -43,7 +49,11 @@ func TestToken(t *testing.T) {
 		"required",
 		"bool",
 		"idle",
-		"List<int>",
+		"List",
+		"<",
+		"int",
+		">",
+		"?",
 		"list",
 		"}",
 		")",

@@ -2,6 +2,7 @@ package main
 
 import (
 	"breadkey/freezed/converter"
+	l10nconverter "breadkey/l10n/converter"
 	"log"
 	"os"
 	"strings"
@@ -21,11 +22,12 @@ const (
 
 	defaultFormat = "firestore"
 
-	enterCorrectFileName = "Please enter dart file name like **/*.dart!"
+	enterCorrectFileName = "Please enter dart file name like **/*.dart! or **/*.arb!"
 	enterCorrectCommand  = "Please enter correct command!"
 	unsupportedLanguage  = "Unsupported language!"
 )
 
+var supportedFileExtensions = [...]string{"dart", "arb"}
 var supportedLanguages = [...]string{defaultLanguage}
 var supportedFormats = [...]string{defaultFormat, "json"}
 
@@ -48,10 +50,11 @@ func main() {
 	format := defaultFormat
 	fileNameParts := strings.Split(fileName, string(os.PathSeparator))
 
-	dartFileName := fileNameParts[len(fileNameParts)-1]
-	dartFileParts := strings.Split(dartFileName, ".")
+	parsingFileName := fileNameParts[len(fileNameParts)-1]
+	parsingFileNameParts := strings.Split(parsingFileName, ".")
+	extension := parsingFileNameParts[len(parsingFileNameParts)-1]
 
-	if dartFileParts[len(dartFileParts)-1] != "dart" {
+	if !isSupportedFileExtension(extension) {
 		log.Fatalln(enterCorrectFileName)
 	}
 
@@ -111,7 +114,7 @@ func main() {
 	}
 
 	if outputFileName == "" {
-		outputFileName = dartFileParts[0] + "." + language
+		outputFileName = parsingFileNameParts[0] + "." + language
 	}
 
 	useDefaultDirectory := true
@@ -128,15 +131,28 @@ func main() {
 		outputFileName = "outputs" + string(os.PathSeparator) + outputFileName
 	}
 
-	freezeds := freezedconverter.Parse(fileName)
+	var translates []string
 
-	if language == defaultLanguage {
-		translates := make([]string, len(freezeds))
+	switch extension {
+	case "dart":
+		freezeds := freezedconverter.Parse(fileName)
+
+		translates = make([]string, len(freezeds))
 
 		for i, f := range freezeds {
 			translates[i] = freezedconverter.TranslateToGo(&f, format)
 		}
+	case "arb":
+		selects := l10nconverter.ParseSelect(fileName)
 
+		translates = make([]string, len(selects))
+
+		for i, s := range selects {
+			translates[i] = l10nconverter.TranslateToGo(&s)
+		}
+	}
+
+	if language == defaultLanguage {
 		result := strings.Join(translates, "\n\n")
 
 		err := os.WriteFile(outputFileName, []byte(result), os.ModePerm)
@@ -145,6 +161,16 @@ func main() {
 			log.Fatalf("Write file error! %v", err)
 		}
 	}
+}
+
+func isSupportedFileExtension(extension string) bool {
+	for _, e := range supportedFileExtensions {
+		if e == extension {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isSupportedLanguage(language string) bool {

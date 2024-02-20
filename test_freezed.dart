@@ -1,3 +1,7 @@
+import 'test.dart';
+
+final a = "test{Hello}";
+
 @freezed
 class TestData with _$TestData {
   const factory TestData({

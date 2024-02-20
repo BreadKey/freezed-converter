@@ -217,7 +217,7 @@ func TranslateToGo(freezed *Freezed, format string) string {
 			formattedName += ",omitempty"
 		}
 
-		line := "\t" + pad(goP.Name, maxNameLength) + " " + pad(goP.Type, maxTypeLength) + " `" + format + ":\"" + formattedName + "\"`\n"
+		line := "\t" + Pad(goP.Name, maxNameLength) + " " + Pad(goP.Type, maxTypeLength) + " `" + format + ":\"" + formattedName + "\"`\n"
 		sb.WriteString(line)
 	}
 	sb.WriteString("}")
@@ -225,7 +225,7 @@ func TranslateToGo(freezed *Freezed, format string) string {
 	return sb.String()
 }
 
-func toGoName(str string) string {
+func ToGoName(str string) string {
 	runes := []rune(str)
 
 	runes[0] = unicode.ToUpper(runes[0])
@@ -270,7 +270,7 @@ func maxStrLength(parameters []ParameterToken, mapper stringMapper) int {
 	return length
 }
 
-func pad(name string, length int) string {
+func Pad(name string, length int) string {
 	lName := len(name)
 
 	if lName == length {
@@ -288,7 +288,7 @@ func pad(name string, length int) string {
 }
 
 func translateToGoParameter(p *ParameterToken) *ParameterToken {
-	goName := toGoName(p.Name)
+	goName := ToGoName(p.Name)
 	var goType string
 
 	switch {

@@ -9,6 +9,7 @@ var openBracketRunes = []rune{'(', '{', '[', '<'}
 var closeBracketRunes = []rune{')', '}', ']', '>'}
 var bracketRunes = append(openBracketRunes, closeBracketRunes...)
 var endRunes = append(bracketRunes, '\n', '\t', ' ', ',', ';', ':')
+var stringStartRunes = []rune{'"'}
 
 func contains(runes []rune, r rune) (bool, int) {
 	for i, c := range runes {
@@ -49,6 +50,7 @@ type Tokenizer struct {
 	Pointer      int
 	file         *os.File
 	currentToken string
+	onReadString bool
 }
 
 func NewTokenizer(filePath string) *Tokenizer {
@@ -66,7 +68,7 @@ func NewTokenizer(filePath string) *Tokenizer {
 }
 
 func (it *Tokenizer) Next() string {
-	bytes := make([]byte, 5)
+	bytes := make([]byte, 600)
 
 	it.file.Seek(int64(it.Pointer), 0)
 	result, err := it.file.Read(bytes)
@@ -94,8 +96,18 @@ func (it *Tokenizer) Next() string {
 
 		isEndRunes, _ := contains(endRunes, r)
 		switch {
+		case it.onReadString:
+			it.currentToken += string(r)
+			if c, _ := contains(stringStartRunes, r); c {
+				if it.currentToken[len(it.currentToken)-2] != '\\' {
+					it.Pointer = startPointer + pos + 1
+					it.onReadString = false
+
+					return it.returnToken(it.currentToken)
+				}
+			}
 		case isEndRunes:
-			if string(it.currentToken) + string(r) == "=>" {
+			if string(it.currentToken)+string(r) == "=>" {
 				it.Pointer = startPointer + pos
 
 				it.returnToken("=>")
@@ -111,6 +123,18 @@ func (it *Tokenizer) Next() string {
 				}
 			}
 		default:
+			if !it.onReadString {
+				if c, _ := contains(stringStartRunes, r); c {
+					if len(it.currentToken) != 0 {
+						it.Pointer = startPointer + pos - 1
+						return it.returnToken(it.currentToken)
+					} else {
+						it.currentToken = string(r)
+						it.onReadString = true
+						continue
+					}
+				}
+			}
 			it.currentToken += string(r)
 		}
 	}
